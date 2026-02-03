@@ -1,9 +1,27 @@
 'use client'
 
+import { useState } from 'react'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { BookOpen, ExternalLink } from 'lucide-react'
+import { DocumentEditor } from '@/components/ui/document-editor'
 
 export default function QuickStartPage() {
+  const [docContent, setDocContent] = useState(`# Quick Start Guide
+
+Welcome to the Agentic Fiscal Policy Intelligence Platform (AFPI). Follow these steps to get started quickly:
+
+1. Clone the repository
+2. Set up environment variables (copy .env.example to .env)
+3. Install dependencies (npm install for frontend, pip install for backend)
+4. Start local services (./scripts/start.sh)
+5. Access the dashboard at http://localhost:3000`)
+
+  const handleSave = (content: string) => {
+    setDocContent(content)
+    // In a real implementation, save to backend API
+    console.log('Saving content:', content)
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-6 max-w-4xl">
@@ -32,6 +50,11 @@ export default function QuickStartPage() {
               </a>
             </div>
           </div>
+        </div>
+
+        <div className="rounded-lg border bg-card p-6">
+          <h2 className="text-xl font-semibold mb-4">Edit Documentation</h2>
+          <DocumentEditor initialContent={docContent} onSave={handleSave} />
         </div>
 
         <div className="rounded-lg border bg-muted/50 p-6">
