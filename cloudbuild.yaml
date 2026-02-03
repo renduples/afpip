@@ -1,0 +1,90 @@
+steps:
+  # Build Backend
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/afpi-production/afpi-repo/afpi-backend:$SHORT_SHA'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/afpi-production/afpi-repo/afpi-backend:latest'
+      - './backend/api-gateway'
+    id: 'build-backend'
+
+  # Build Frontend
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/afpi-production/afpi-repo/afpi-frontend:$SHORT_SHA'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/afpi-production/afpi-repo/afpi-frontend:latest'
+      - './frontend'
+    id: 'build-frontend'
+
+  # Push Backend
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/afpi-production/afpi-repo/afpi-backend:$SHORT_SHA']
+    id: 'push-backend'
+    waitFor: ['build-backend']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/afpi-production/afpi-repo/afpi-backend:latest']
+    waitFor: ['push-backend']
+
+  # Push Frontend
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/afpi-production/afpi-repo/afpi-frontend:$SHORT_SHA']
+    id: 'push-frontend'
+    waitFor: ['build-frontend']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/afpi-production/afpi-repo/afpi-frontend:latest']
+    waitFor: ['push-frontend']
+
+  # Deploy Backend to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'afpi-backend'
+      - '--image=us-central1-docker.pkg.dev/afpi-production/afpi-repo/afpi-backend:$SHORT_SHA'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--memory=512Mi'
+      - '--cpu=1'
+      - '--min-instances=0'
+      - '--max-instances=10'
+      - '--set-env-vars=ENVIRONMENT=production,GCP_PROJECT_ID=afpi-production'
+    id: 'deploy-backend'
+    waitFor: ['push-backend']
+
+  # Deploy Frontend to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'afpi-frontend'
+      - '--image=us-central1-docker.pkg.dev/afpi-production/afpi-repo/afpi-frontend:$SHORT_SHA'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--memory=512Mi'
+      - '--cpu=1'
+      - '--min-instances=0'
+      - '--max-instances=10'
+    id: 'deploy-frontend'
+    waitFor: ['push-frontend']
+
+images:
+  - 'us-central1-docker.pkg.dev/afpi-production/afpi-repo/afpi-backend:$SHORT_SHA'
+  - 'us-central1-docker.pkg.dev/afpi-production/afpi-repo/afpi-backend:latest'
+  - 'us-central1-docker.pkg.dev/afpi-production/afpi-repo/afpi-frontend:$SHORT_SHA'
+  - 'us-central1-docker.pkg.dev/afpi-production/afpi-repo/afpi-frontend:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: '1800s'
