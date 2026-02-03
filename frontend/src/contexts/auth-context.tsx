@@ -19,12 +19,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Demo users - In production, this would be handled by the backend
-const DEMO_USERS = [
-  { id: '1', email: 'admin@afpi.gov', password: '***REMOVED***', name: 'Admin User', role: 'admin' as const },
-  { id: '2', email: 'analyst@afpi.gov', password: '***REMOVED***', name: 'Policy Analyst', role: 'analyst' as const },
-  { id: '3', email: 'viewer@afpi.gov', password: '***REMOVED***', name: 'Data Viewer', role: 'viewer' as const },
-]
+// API URL for authentication
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://afpi-backend-43847292060.us-central1.run.app'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -53,21 +49,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, isLoading, pathname, router])
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500))
+    try {
+      const response = await fetch(`${API_URL}/api/v1/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
 
-    const foundUser = DEMO_USERS.find(
-      u => u.email === email && u.password === password
-    )
-
-    if (foundUser) {
-      const { password: _, ...userWithoutPassword } = foundUser
-      setUser(userWithoutPassword)
-      localStorage.setItem('afpi_user', JSON.stringify(userWithoutPassword))
-      return true
+      if (response.ok) {
+        const data = await response.json()
+        const loggedInUser: User = {
+          id: data.id || '1',
+          email: data.email,
+          name: data.name || email.split('@')[0],
+          role: data.role || 'viewer',
+        }
+        setUser(loggedInUser)
+        localStorage.setItem('afpi_user', JSON.stringify(loggedInUser))
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('Login error:', error)
+      return false
     }
-
-    return false
   }
 
   const logout = () => {
