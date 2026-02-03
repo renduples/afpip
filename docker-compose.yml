@@ -1,0 +1,104 @@
+version: '3.9'
+
+services:
+  # Frontend Dashboard
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://api-gateway:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - api-gateway
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=mysql+pymysql://afpi:afpi@mariadb:3306/afpi
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./backend/api-gateway:/app
+    depends_on:
+      - mariadb
+      - redis
+
+  # Data Ingestion Service
+  data-ingestion:
+    build:
+      context: ./backend/services/data-ingestion
+      dockerfile: Dockerfile
+    environment:
+      - PUBSUB_EMULATOR_HOST=pubsub:8085
+    volumes:
+      - ./backend/services/data-ingestion:/app
+    depends_on:
+      - pubsub
+
+  # LLM Service
+  llm-service:
+    build:
+      context: ./backend/services/llm-service
+      dockerfile: Dockerfile
+    environment:
+      - VERTEX_AI_PROJECT=${GCP_PROJECT_ID}
+      - VERTEX_AI_LOCATION=us-central1
+    volumes:
+      - ./backend/services/llm-service:/app
+
+  # Agent Manager
+  agent-manager:
+    build:
+      context: ./backend/services/agent-manager
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=mysql+pymysql://afpi:afpi@mariadb:3306/afpi
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./backend/services/agent-manager:/app
+    depends_on:
+      - mariadb
+      - redis
+
+  # MariaDB
+  mariadb:
+    image: mariadb:11.2
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=afpi
+      - MYSQL_USER=afpi
+      - MYSQL_PASSWORD=afpi
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  # Pub/Sub Emulator
+  pubsub:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    command: gcloud beta emulators pubsub start --host-port=0.0.0.0:8085
+    ports:
+      - "8085:8085"
+
+volumes:
+  mariadb-data:
+  redis-data:
