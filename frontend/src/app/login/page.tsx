@@ -96,25 +96,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="mt-8 pt-6 border-t">
-            <p className="text-xs text-center text-muted-foreground mb-3">Demo Credentials</p>
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between items-center p-2 bg-muted/50 rounded">
-                <span className="font-medium">Admin:</span>
-                <span className="font-mono">admin@afpi.gov / ***REMOVED***</span>
-              </div>
-              <div className="flex justify-between items-center p-2 bg-muted/50 rounded">
-                <span className="font-medium">Analyst:</span>
-                <span className="font-mono">analyst@afpi.gov / ***REMOVED***</span>
-              </div>
-              <div className="flex justify-between items-center p-2 bg-muted/50 rounded">
-                <span className="font-medium">Viewer:</span>
-                <span className="font-mono">viewer@afpi.gov / ***REMOVED***</span>
-              </div>
-            </div>
-          </div>
-
           {/* Security Notice */}
           <div className="mt-6 p-3 bg-muted/50 rounded-lg">
             <p className="text-xs text-muted-foreground text-center">

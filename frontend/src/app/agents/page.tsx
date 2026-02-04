@@ -18,12 +18,15 @@ interface Agent {
 export default function AgentsPage() {
   const [searchTerm, setSearchTerm] = useState('')
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://afpi-backend-43847292060.us-central1.run.app'
+
   const { data: agents = [], isLoading } = useQuery<Agent[]>({
     queryKey: ['agents'],
     queryFn: async () => {
-      const response = await fetch('http://localhost:8000/api/v1/agents')
+      const response = await fetch(`${API_URL}/api/v1/agents`)
       if (!response.ok) throw new Error('Failed to fetch agents')
-      return response.json()
+      const json = await response.json()
+      return json.data || json
     },
   })
 

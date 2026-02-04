@@ -17,12 +17,15 @@ export default function TaxonomiesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://afpi-backend-43847292060.us-central1.run.app'
+
   const { data: taxonomies = [], isLoading } = useQuery<Taxonomy[]>({
     queryKey: ['taxonomies'],
     queryFn: async () => {
-      const response = await fetch('http://localhost:8000/api/v1/taxonomies')
+      const response = await fetch(`${API_URL}/api/v1/taxonomies`)
       if (!response.ok) throw new Error('Failed to fetch taxonomies')
-      return response.json()
+      const json = await response.json()
+      return json.data || json
     },
   })
 

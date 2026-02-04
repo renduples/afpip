@@ -299,52 +299,142 @@ gcloud logging read "resource.type=cloud_run_revision AND resource.labels.servic
 
 ---
 
-## 📋 Next Steps (Priority Order)
+## 📋 Dashboard Component Status & Todo List
 
-### 1. ⏳ Verify AI Assistant Works
-- Configure X.AI API key in Settings → AI Agent
-- Test connection using "Test Connection" button
-- Try chatting with the AI Assistant in header
-- If errors persist, check browser console (F12) for details
+### Current Status Summary
+| Component | Frontend | Backend API | Database | Status |
+|-----------|----------|-------------|----------|--------|
+| Dashboard Home | ✅ UI exists | ✅ Mock data | ❌ None | ⚠️ Hardcoded |
+| Data Sources | ✅ UI exists | ⚠️ Mock only | ❌ None | ⚠️ Not functional |
+| Agents | ✅ UI exists | ⚠️ Mock only | ❌ None | ⚠️ Not functional |
+| Taxonomies | ✅ UI exists | ⚠️ Mock only | ❌ None | ⚠️ Not functional |
+| Analytics | ✅ UI exists | ⚠️ Mock only | ❌ None | ⚠️ Charts placeholder |
+| Reports | ✅ UI exists | ❌ No API | ❌ None | ❌ Mock data only |
+| Settings | ✅ Works | ✅ AI config | ❌ localStorage | ⚠️ Partial |
+| Documentation | ✅ Static | ❌ No editing API | ❌ None | ⚠️ Read-only |
+| Login | ✅ UI exists | ✅ Auth API | ✅ Secret Manager | ✅ Working |
+| AI Assistant | ✅ Working | ✅ Proxy API | N/A | ✅ Working |
+| GitHub Integration | ✅ Developer Mode | ✅ API exists | ✅ Secret Manager | ✅ Working |
 
-### 2. Custom Domains
-Verify SSL certificates are working:
-```bash
-curl https://api.afpip.com/health
-curl -I https://afpip.com
+---
+
+## 🚀 Implementation Todo List
+
+### Phase 1: Fix Immediate Issues (Priority: HIGH)
+- [ ] **1.1 Update Login Page** - Remove demo credentials display (security)
+- [ ] **1.2 Fix API URLs** - Frontend still using localhost:8000 in some places
+- [ ] **1.3 Connect Frontend to Real APIs** - Data Sources, Agents, Taxonomies pages call /api/v1/* but response format differs
+
+### Phase 2: Database & Persistence (Priority: HIGH)
+- [ ] **2.1 Set Up Cloud SQL** - Create MySQL instance for persistent storage
+- [ ] **2.2 Create Database Models** - data_sources, agents, taxonomies, reports tables
+- [ ] **2.3 Run Alembic Migrations** - Apply initial schema
+- [ ] **2.4 Update Backend Endpoints** - Replace mock data with DB queries
+
+### Phase 3: Data Sources Module (Priority: MEDIUM)
+- [ ] **3.1 Create Data Source CRUD** - Full create/read/update/delete operations
+- [ ] **3.2 Add Data Source Types** - API, File Upload, Scraper, BigQuery, etc.
+- [ ] **3.3 Implement Sync Status** - Track last sync, record counts
+- [ ] **3.4 Add Configuration Modal** - UI for configuring each source type
+- [ ] **3.5 Schedule Management** - Cron-based sync scheduling
+
+### Phase 4: AI Agents Module (Priority: MEDIUM)
+- [ ] **4.1 Agent CRUD Operations** - Create/configure/delete agents
+- [ ] **4.2 Agent Control Actions** - Start/stop/pause/resume with real effect
+- [ ] **4.3 Model Selection** - Choose from configured AI providers
+- [ ] **4.4 Task Queue Integration** - Connect to job processing system
+- [ ] **4.5 Agent Logs/History** - View agent execution history
+
+### Phase 5: Taxonomies Module (Priority: MEDIUM)
+- [ ] **5.1 Taxonomy CRUD** - Full category management
+- [ ] **5.2 Hierarchical Editor** - Drag-drop tree editing
+- [ ] **5.3 Item Assignment** - Assign data records to categories
+- [ ] **5.4 Import/Export** - CSV/JSON taxonomy import
+
+### Phase 6: Analytics & Charts (Priority: MEDIUM)
+- [ ] **6.1 Install Chart Library** - Add recharts or chart.js
+- [ ] **6.2 Data Volume Chart** - Show record counts over time
+- [ ] **6.3 Query Performance Chart** - API response times
+- [ ] **6.4 Agent Performance Chart** - Processing stats by agent
+- [ ] **6.5 Cost Analysis Chart** - LLM token usage costs
+
+### Phase 7: Reports Module (Priority: LOW)
+- [ ] **7.1 Report Generation API** - Backend endpoint to create reports
+- [ ] **7.2 Report Templates** - Define report types/formats
+- [ ] **7.3 PDF/Excel Export** - Generate downloadable files
+- [ ] **7.4 Scheduled Reports** - Automatic report generation
+- [ ] **7.5 Report Storage** - Cloud Storage integration
+
+### Phase 8: Documentation Editing (Priority: LOW)
+- [ ] **8.1 Document Edit API** - Backend CRUD for docs
+- [ ] **8.2 Markdown Editor** - Rich text editing component
+- [ ] **8.3 Version History** - Track document changes
+- [ ] **8.4 Apply to All Doc Pages** - Extend editor to all /docs/* pages
+
+### Phase 9: Infrastructure (Priority: MEDIUM)
+- [ ] **9.1 Cloud Build Trigger** - Auto-deploy on GitHub push
+- [ ] **9.2 Staging Environment** - Create dev/staging Cloud Run services
+- [ ] **9.3 Uptime Monitoring** - Cloud Monitoring uptime checks
+- [ ] **9.4 Error Tracking** - Sentry integration
+- [ ] **9.5 Rate Limiting** - API rate limits per user
+
+### Phase 10: Security & Polish (Priority: HIGH)
+- [ ] **10.1 JWT Tokens** - Replace localStorage session with JWT
+- [ ] **10.2 Role-Based Access** - Enforce admin/analyst/viewer permissions
+- [ ] **10.3 Audit Logging** - Track user actions
+- [ ] **10.4 API Key Rotation** - Rotate exposed GitHub token
+- [ ] **10.5 HTTPS Verification** - Confirm custom domain SSL
+
+---
+
+## 🔧 Quick Fixes Needed
+
+### Frontend API URL Issues
+Files still referencing `localhost:8000`:
+- `/frontend/src/app/data-sources/page.tsx` → should use `API_URL` env var
+- `/frontend/src/app/agents/page.tsx` → should use `API_URL` env var  
+- `/frontend/src/app/taxonomies/page.tsx` → should use `API_URL` env var
+
+### Backend Response Format Mismatches
+Frontend expects:
+```typescript
+// data-sources/page.tsx expects directly:
+{ id, name, type, status, lastSync, recordCount }[]
+
+// Backend returns wrapped:
+{ data: [...], pagination: {...} }
 ```
-If working, update frontend to use custom API domain:
-```bash
-gcloud run services update afpi-frontend \
-  --region=us-central1 \
-  --update-env-vars=NEXT_PUBLIC_API_URL=https://api.afpip.com
-```
 
-### 3. Set Up Cloud SQL (Replace SQLite)
+---
+
+## 📋 Previous Next Steps (Infrastructure)
+
+### 1. Custom Domains ✅ CONFIGURED
+- SSL certificates provisioned
+- afpip.com → frontend
+- api.afpip.com → backend
+
+### 2. Set Up Cloud SQL (Replace SQLite)
 - Create Cloud SQL instance (MySQL/MariaDB)
 - Configure connection
 - Run migrations
 - Update `DATABASE_URL` environment variable
 
-### 4. Set Up Redis (Memorystore)
+### 3. Set Up Redis (Memorystore)
 - Create Memorystore instance
 - Update `REDIS_URL` environment variable
 
-### 5. Security Hardening
-- Replace temporary secret keys with strong random values
-- Store secrets in Secret Manager
-- Set up Cloud Armor (WAF)
-
-### 6. Monitoring & Logging
+### 4. Monitoring & Logging
 - Configure Cloud Logging
 - Set up uptime checks
 - Create alerting policies
 - Add Sentry DSN for error tracking
 
-### 7. CI/CD Pipeline
-- Set up Cloud Build triggers for GitHub
-- Automate deployments on push to main
-- Add testing stages
+### 5. CI/CD Pipeline ⏳ PARTIAL
+- ✅ GitHub repo connected
+- ✅ GitHub token in Secret Manager
+- ✅ AI can create PRs
+- [ ] Cloud Build trigger on merge
 
 ---
 
@@ -477,14 +567,37 @@ gcloud run services update afpi-frontend \
 
 ## 📝 Session History
 
-### February 3, 2026
+### February 4, 2026
+- Reviewed all dashboard components and created comprehensive todo list
+- Identified API URL issues (pages still using localhost:8000)
+- Documented response format mismatches between frontend/backend
+- Updated claude.md with 10-phase implementation roadmap
+
+### February 3, 2026 (Evening)
+- **Security Fix**: GitGuardian detected exposed credentials
+- Removed hardcoded demo passwords from auth-context.tsx
+- Created secure `/api/v1/auth/login` endpoint with bcrypt hashing
+- Stored admin password hash in GCP Secret Manager
+- Cleaned git history with git-filter-repo (removed all credential occurrences)
+- Force pushed sanitized history to GitHub
+- Deployed backend v9, frontend v8
+
+### February 3, 2026 (Afternoon)
+- Implemented GitHub integration for AI Developer Mode
+- Created `/api/v1/github/*` endpoints (read, write, create-branch, create-pr)
+- Stored GitHub token in Secret Manager
+- Added role-based access (Developer=write, others=read-only)
+- AI can now create branches and PRs for code changes
+- Merged first AI-created PR (#1): Document editing feature
+- Fixed deprecated grok-beta → grok-3 model
+- Increased AI timeout from 30s → 120s
+
+### February 3, 2026 (Morning)
 - Moved AI Assistant button from bottom-right to header (next to profile)
 - Added X.AI provider support with backend proxy
 - Fixed CORS configuration for production domains
 - Created `/api/v1/ai/chat` backend endpoint
 - Added Settings page with API key configuration and test connection
-- Deployed backend revision `afpi-backend-00012-7xx`
-- Deployed frontend revision `afpi-frontend-00005-gk2`
 
 ### January 31, 2026
 - Initial GCP deployment completed
@@ -495,6 +608,9 @@ gcloud run services update afpi-frontend \
 
 ---
 
-**Last Updated**: February 3, 2026  
+**Last Updated**: February 4, 2026  
 **Platform Status**: ✅ LIVE  
-**AI Assistant**: ✅ Configured (awaiting X.AI API key)
+**Current Versions**: Backend v9, Frontend v8  
+**AI Assistant**: ✅ Working with X.AI (Grok-3)  
+**GitHub Integration**: ✅ Working (PR creation enabled)  
+**Admin Credentials**: Stored in GCP Secret Manager (admin@afpip.com)
