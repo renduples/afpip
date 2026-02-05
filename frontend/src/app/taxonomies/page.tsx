@@ -19,15 +19,19 @@ export default function TaxonomiesPage() {
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://afpi-backend-43847292060.us-central1.run.app'
 
-  const { data: taxonomies = [], isLoading } = useQuery<Taxonomy[]>({
+  const { data: taxonomiesData, isLoading } = useQuery<Taxonomy[]>({
     queryKey: ['taxonomies'],
     queryFn: async () => {
       const response = await fetch(`${API_URL}/api/v1/taxonomies`)
       if (!response.ok) throw new Error('Failed to fetch taxonomies')
       const json = await response.json()
-      return json.data || json
+      const data = json.data || json
+      return Array.isArray(data) ? data : []
     },
   })
+
+  // Ensure taxonomies is always an array
+  const taxonomies = Array.isArray(taxonomiesData) ? taxonomiesData : []
 
   const toggleExpanded = (id: string) => {
     const newExpanded = new Set(expandedIds)

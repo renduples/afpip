@@ -20,15 +20,19 @@ export default function AgentsPage() {
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://afpi-backend-43847292060.us-central1.run.app'
 
-  const { data: agents = [], isLoading } = useQuery<Agent[]>({
+  const { data: agentsData, isLoading } = useQuery<Agent[]>({
     queryKey: ['agents'],
     queryFn: async () => {
       const response = await fetch(`${API_URL}/api/v1/agents`)
       if (!response.ok) throw new Error('Failed to fetch agents')
       const json = await response.json()
-      return json.data || json
+      const data = json.data || json
+      return Array.isArray(data) ? data : []
     },
   })
+
+  // Ensure agents is always an array
+  const agents = Array.isArray(agentsData) ? agentsData : []
 
   const filteredAgents = agents.filter((agent) =>
     agent.name.toLowerCase().includes(searchTerm.toLowerCase())

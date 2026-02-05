@@ -148,7 +148,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <div className="flex h-16 items-center justify-between px-6">
             <div>
               <div className="text-sm font-bold">Agentic Fiscal Policy</div>
-              <div className="text-xs text-muted-foreground">Intelligence Platform <span className="text-primary">v1.0.10</span></div>
+              <div className="text-xs text-muted-foreground">Intelligence Platform <span className="text-primary">v1.0.11</span></div>
             </div>
             <button onClick={onClose} className="lg:hidden">
               <X className="h-6 w-6" />
@@ -168,7 +168,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <div className="flex h-16 items-center px-6">
             <div>
               <div className="text-sm font-bold">Agentic Fiscal Policy</div>
-              <div className="text-xs text-muted-foreground">Intelligence Platform <span className="text-primary">v1.0.10</span></div>
+              <div className="text-xs text-muted-foreground">Intelligence Platform <span className="text-primary">v1.0.11</span></div>
             </div>
           </div>
           <nav className="flex-1 space-y-1 px-3 py-4">

@@ -610,7 +610,7 @@ Frontend expects:
 
 **Last Updated**: February 4, 2026  
 **Platform Status**: ✅ LIVE  
-**Current Versions**: Backend v9, Frontend v8  
+**Current Versions**: Backend v9, Frontend v10  
 **AI Assistant**: ✅ Working with X.AI (Grok-3)  
 **GitHub Integration**: ✅ Working (PR creation enabled)  
-**Admin Credentials**: Stored in GCP Secret Manager (admin@afpip.com)
+**Admin Credentials**: `admin@afpip.com` / `8Ud4a-4GZfgyBlOhb7TxyQ` (hash in Secret Manager)

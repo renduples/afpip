@@ -19,16 +19,20 @@ export default function DataSourcesPage() {
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://afpi-backend-43847292060.us-central1.run.app'
 
-  const { data: dataSources = [], isLoading } = useQuery<DataSource[]>({
+  const { data: dataSourcesData, isLoading } = useQuery<DataSource[]>({
     queryKey: ['data-sources'],
     queryFn: async () => {
       const response = await fetch(`${API_URL}/api/v1/data-sources`)
       if (!response.ok) throw new Error('Failed to fetch data sources')
       const json = await response.json()
       // Backend returns {data: [...], pagination: {...}}, extract the array
-      return json.data || json
+      const data = json.data || json
+      return Array.isArray(data) ? data : []
     },
   })
+
+  // Ensure dataSources is always an array
+  const dataSources = Array.isArray(dataSourcesData) ? dataSourcesData : []
 
   const filteredSources = dataSources.filter((source) =>
     source.name.toLowerCase().includes(searchTerm.toLowerCase())
