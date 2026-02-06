@@ -98,7 +98,7 @@ export default function DataSourcesPage() {
           <div className="rounded-lg border bg-card p-4">
             <p className="text-sm text-muted-foreground">Total Records</p>
             <p className="text-2xl font-bold">
-              {dataSources.reduce((sum, s) => sum + s.recordCount, 0).toLocaleString()}
+              {dataSources.reduce((sum, s) => sum + (s.recordCount || 0), 0).toLocaleString()}
             </p>
           </div>
         </div>
@@ -124,8 +124,8 @@ export default function DataSourcesPage() {
                         <p className="text-sm text-muted-foreground">{source.type}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium">{source.recordCount.toLocaleString()} records</p>
-                        <p className="text-xs text-muted-foreground">Last sync: {source.lastSync}</p>
+                        <p className="text-sm font-medium">{(source.recordCount || 0).toLocaleString()} records</p>
+                        <p className="text-xs text-muted-foreground">Last sync: {source.lastSync || 'Never'}</p>
                       </div>
                     </div>
                     <button className="ml-4 px-3 py-1 text-sm border rounded-lg hover:bg-accent">
