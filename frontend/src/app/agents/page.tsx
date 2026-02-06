@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Search, Bot, Play, Pause, Square, Settings } from 'lucide-react'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 
@@ -10,13 +10,16 @@ interface Agent {
   name: string
   type: string
   status: 'running' | 'paused' | 'stopped' | 'error'
+  taxonomy: string
   tasksCompleted: number
   uptime: string
   model: string
+  progress: number
 }
 
 export default function AgentsPage() {
   const [searchTerm, setSearchTerm] = useState('')
+  const queryClient = useQueryClient()
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://afpi-backend-43847292060.us-central1.run.app'
 
@@ -28,6 +31,20 @@ export default function AgentsPage() {
       const json = await response.json()
       const data = json.data || json
       return Array.isArray(data) ? data : []
+    },
+  })
+
+  const controlMutation = useMutation({
+    mutationFn: async ({ agentId, action }: { agentId: string; action: string }) => {
+      const response = await fetch(`${API_URL}/api/v1/agents/${agentId}/control`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      })
+      return response.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agents'] })
     },
   })
 
@@ -49,6 +66,23 @@ export default function AgentsPage() {
       case 'error':
         return 'bg-destructive'
     }
+  }
+
+  const getStatusBadgeClass = (status: Agent['status']) => {
+    switch (status) {
+      case 'running':
+        return 'bg-primary text-primary-foreground'
+      case 'paused':
+        return 'bg-gray-200 text-gray-700'
+      case 'stopped':
+        return 'bg-gray-300 text-gray-600'
+      case 'error':
+        return 'bg-red-100 text-red-700'
+    }
+  }
+
+  const handleControl = (agentId: string, action: string) => {
+    controlMutation.mutate({ agentId, action })
   }
 
   return (
@@ -100,7 +134,7 @@ export default function AgentsPage() {
           <div className="rounded-lg border bg-card p-4">
             <p className="text-sm text-muted-foreground">Tasks Completed</p>
             <p className="text-2xl font-bold">
-              {agents.reduce((sum, a) => sum + a.tasksCompleted, 0).toLocaleString()}
+              {agents.reduce((sum, a) => sum + (a.tasksCompleted || 0), 0).toLocaleString()}
             </p>
           </div>
         </div>
@@ -120,54 +154,63 @@ export default function AgentsPage() {
             filteredAgents.map((agent) => (
               <div key={agent.id} className="rounded-lg border bg-card p-6">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <Bot className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">{agent.name}</h3>
-                      <p className="text-xs text-muted-foreground">{agent.type}</p>
-                    </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold">{agent.name}</h3>
+                    <p className="text-sm text-muted-foreground">{agent.taxonomy}</p>
                   </div>
+                  <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusBadgeClass(agent.status)}`}>
+                    {agent.status}
+                  </span>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="mb-4">
                   <div className="flex items-center gap-2">
-                    <div className={`h-2 w-2 rounded-full ${getStatusColor(agent.status)} animate-pulse`} />
-                    <span className="text-xs font-medium capitalize">{agent.status}</span>
+                    <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-primary transition-all duration-300"
+                        style={{ width: `${agent.progress || 0}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-muted-foreground w-10 text-right">
+                      {agent.progress || 0}%
+                    </span>
                   </div>
                 </div>
 
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Model:</span>
-                    <span className="font-mono text-xs">{agent.model}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Tasks Completed:</span>
-                    <span className="font-medium">{agent.tasksCompleted}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Uptime:</span>
-                    <span className="font-medium">{agent.uptime}</span>
-                  </div>
-                </div>
-
+                {/* Control Buttons */}
                 <div className="flex gap-2">
+                  <button
+                    onClick={() => handleControl(agent.id, 'stop')}
+                    disabled={agent.status === 'stopped'}
+                    className="flex items-center justify-center p-2 text-sm border rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Stop"
+                  >
+                    <Square className="h-4 w-4" />
+                  </button>
                   {agent.status === 'running' ? (
-                    <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm border rounded-lg hover:bg-accent">
-                      <Pause className="h-4 w-4" />
-                      Pause
+                    <button
+                      onClick={() => handleControl(agent.id, 'pause')}
+                      className="flex items-center justify-center p-2 text-sm border rounded-lg hover:bg-accent"
+                      title="Pause"
+                    >
+                      <Play className="h-4 w-4" />
                     </button>
                   ) : (
-                    <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm border rounded-lg hover:bg-accent">
+                    <button
+                      onClick={() => handleControl(agent.id, 'resume')}
+                      disabled={agent.status === 'stopped'}
+                      className="flex items-center justify-center p-2 text-sm border rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Resume"
+                    >
                       <Play className="h-4 w-4" />
-                      Start
                     </button>
                   )}
-                  <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm border rounded-lg hover:bg-accent">
+                  <button 
+                    className="flex items-center justify-center p-2 text-sm border rounded-lg hover:bg-accent"
+                    title="Settings"
+                  >
                     <Square className="h-4 w-4" />
-                    Stop
-                  </button>
-                  <button className="px-3 py-2 text-sm border rounded-lg hover:bg-accent">
-                    <Settings className="h-4 w-4" />
                   </button>
                 </div>
               </div>
