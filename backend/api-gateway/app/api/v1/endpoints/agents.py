@@ -5,46 +5,111 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
+# Agent type definitions
+AGENT_TYPES = {
+    "discovery": {
+        "name": "Discovery Agent",
+        "description": "Explores the internet for data sources and APIs, evaluates freshness and reliability",
+        "icon": "search",
+        "color": "blue"
+    },
+    "collector": {
+        "name": "Collector Agent",
+        "description": "Fetches data from approved sources on schedule, handles auth and rate limits",
+        "icon": "download",
+        "color": "green"
+    },
+    "analyzer": {
+        "name": "Analyzer Agent",
+        "description": "Cleans, validates, and normalizes raw data, applies taxonomy classification",
+        "icon": "cpu",
+        "color": "purple"
+    },
+    "reporter": {
+        "name": "Report Agent",
+        "description": "Generates scheduled and ad-hoc reports in various formats",
+        "icon": "file-text",
+        "color": "orange"
+    }
+}
+
 # In-memory agent state (persists during runtime)
 agents_state: Dict[str, dict] = {
-    "agent_456": {
-        "id": "agent_456",
-        "name": "Inflation Analysis Agent",
-        "type": "analysis",
+    "agent_discovery": {
+        "id": "agent_discovery",
+        "name": "Discovery Agent",
+        "type": "discovery",
+        "description": "Scans financial APIs, government data portals, and RSS feeds for new data sources",
         "status": "running",
-        "taxonomy": "inflation",
         "model": "grok-3",
-        "started_at": "2026-02-04T08:00:00Z",
-        "progress": 65,
-        "records_processed": 125000,
-        "tasksCompleted": 1250,
-        "uptime": "4h 32m"
+        "started_at": "2026-02-05T06:00:00Z",
+        "progress": 72,
+        "sources_found": 156,
+        "sources_graded": 142,
+        "last_discovery": "2026-02-05T11:30:00Z",
+        "schedule": "Weekly (Sundays 6AM)",
+        "metrics": {
+            "apis_scanned": 2400,
+            "new_sources_this_week": 12,
+            "avg_quality_score": 7.8
+        }
     },
-    "agent_457": {
-        "id": "agent_457",
-        "name": "Employment Trends Agent",
-        "type": "analysis",
+    "agent_collector": {
+        "id": "agent_collector",
+        "name": "Collector Agent",
+        "type": "collector",
+        "description": "Fetches data from 45 approved sources, handles authentication and rate limiting",
         "status": "running",
-        "taxonomy": "employment",
         "model": "grok-3",
-        "started_at": "2026-02-04T09:15:00Z",
-        "progress": 42,
-        "records_processed": 85000,
-        "tasksCompleted": 850,
-        "uptime": "3h 17m"
+        "started_at": "2026-02-05T00:00:00Z",
+        "progress": 58,
+        "records_fetched": 1250000,
+        "active_sources": 45,
+        "failed_sources": 2,
+        "schedule": "Continuous (per source frequency)",
+        "metrics": {
+            "avg_fetch_time_ms": 340,
+            "success_rate": 0.956,
+            "data_volume_gb": 2.4
+        }
     },
-    "agent_458": {
-        "id": "agent_458",
-        "name": "GDP Analyzer",
-        "type": "analysis",
+    "agent_analyzer": {
+        "id": "agent_analyzer",
+        "name": "Analyzer Agent",
+        "type": "analyzer",
+        "description": "Processes raw data, applies taxonomies, detects anomalies",
+        "status": "running",
+        "model": "grok-3",
+        "started_at": "2026-02-05T01:00:00Z",
+        "progress": 45,
+        "records_processed": 890000,
+        "records_normalized": 875000,
+        "anomalies_detected": 234,
+        "schedule": "Triggered after Collector",
+        "metrics": {
+            "avg_processing_time_ms": 125,
+            "classification_accuracy": 0.94,
+            "data_quality_score": 8.2
+        }
+    },
+    "agent_reporter": {
+        "id": "agent_reporter",
+        "name": "Report Agent",
+        "type": "reporter",
+        "description": "Generates daily digests, weekly summaries, and on-demand reports",
         "status": "paused",
-        "taxonomy": "gdp",
         "model": "grok-3",
-        "started_at": "2026-02-04T10:30:00Z",
-        "progress": 28,
-        "records_processed": 45000,
-        "tasksCompleted": 450,
-        "uptime": "2h 02m"
+        "started_at": "2026-02-05T06:00:00Z",
+        "progress": 100,
+        "reports_generated": 28,
+        "reports_pending": 0,
+        "last_report": "2026-02-05T06:00:00Z",
+        "schedule": "Daily 6AM + on-demand",
+        "metrics": {
+            "avg_generation_time_s": 45,
+            "reports_this_week": 7,
+            "export_formats": ["PDF", "Excel", "JSON"]
+        }
     }
 }
 
@@ -106,6 +171,11 @@ async def control_agent(agent_id: str, request: AgentControlRequest):
         "new_state": agent["status"],
         "message": f"Agent {action} command executed"
     }
+
+@router.get("/types")
+async def get_agent_types():
+    """Get available agent types"""
+    return {"data": AGENT_TYPES}
 
 @router.get("/{agent_id}")
 async def get_agent(agent_id: str):
