@@ -1,9 +1,109 @@
 from fastapi import APIRouter
 from typing import List, Dict
-from datetime import datetime
+from datetime import datetime, timedelta
+import random
 from pydantic import BaseModel
 
 router = APIRouter()
+
+# Log entry generator for realistic agent activity
+def generate_agent_logs(agent_type: str, agent_status: str) -> List[dict]:
+    """Generate realistic log entries for each agent type"""
+    now = datetime.now()
+    logs = []
+    
+    if agent_status == "stopped":
+        return [{"time": (now - timedelta(minutes=30)).isoformat(), "level": "info", "message": "Agent stopped by user"}]
+    
+    log_templates = {
+        "discovery": [
+            ("info", "Scanning API directory: {source}"),
+            ("info", "Found new data source: {source}"),
+            ("info", "Evaluating source quality for {source}"),
+            ("success", "Source graded: {source} - Score: {score}/10"),
+            ("info", "Checking RSS feed: {feed}"),
+            ("warning", "Source {source} has stale data (last updated {days} days ago)"),
+            ("info", "Added {source} to approved sources list"),
+            ("info", "Crawling government data portal: {portal}"),
+        ],
+        "collector": [
+            ("info", "Fetching data from {source}"),
+            ("success", "Retrieved {count} records from {source}"),
+            ("info", "Authenticating with {source} API"),
+            ("info", "Rate limit reached for {source}, waiting {seconds}s"),
+            ("warning", "Retry attempt {attempt}/3 for {source}"),
+            ("success", "Sync complete: {source} - {count} new records"),
+            ("info", "Scheduling next fetch for {source} in {hours}h"),
+            ("error", "Connection timeout for {source}, will retry"),
+        ],
+        "analyzer": [
+            ("info", "Processing batch #{batch} ({count} records)"),
+            ("info", "Applying taxonomy: {taxonomy}"),
+            ("success", "Classified {count} records as {category}"),
+            ("info", "Running anomaly detection on {dataset}"),
+            ("warning", "Anomaly detected: {description}"),
+            ("info", "Normalizing data format for {source}"),
+            ("success", "Validation complete: {count} records passed"),
+            ("info", "Calculating derived metrics for {metric}"),
+        ],
+        "reporter": [
+            ("info", "Generating daily digest report"),
+            ("info", "Compiling data for {report_type} report"),
+            ("success", "Report generated: {report_name}"),
+            ("info", "Exporting to {format} format"),
+            ("info", "Scheduling report delivery for {time}"),
+            ("success", "Report emailed to {recipients} recipients"),
+            ("info", "Archiving report to cloud storage"),
+            ("info", "Preparing weekly summary charts"),
+        ]
+    }
+    
+    sources = ["BLS API", "FRED API", "Census Bureau", "Yahoo Finance", "World Bank", "IMF Data", "SEC EDGAR", "Treasury.gov"]
+    taxonomies = ["inflation", "employment", "gdp", "interest_rates", "housing", "consumer_spending"]
+    categories = ["macroeconomic", "labor_market", "price_index", "financial_indicator"]
+    
+    templates = log_templates.get(agent_type, log_templates["analyzer"])
+    
+    # Generate 8-12 log entries for the last 30 minutes
+    num_logs = random.randint(8, 12)
+    for i in range(num_logs):
+        minutes_ago = random.randint(0, 30)
+        template = random.choice(templates)
+        level, msg_template = template
+        
+        # Fill in placeholders
+        message = msg_template.format(
+            source=random.choice(sources),
+            feed=f"https://feeds.{random.choice(['bls', 'fred', 'census'])}.gov/rss",
+            portal=random.choice(["data.gov", "census.gov", "bls.gov"]),
+            score=random.randint(6, 10),
+            days=random.randint(2, 30),
+            count=random.randint(100, 50000),
+            seconds=random.randint(5, 60),
+            attempt=random.randint(1, 3),
+            hours=random.randint(1, 24),
+            batch=random.randint(1, 100),
+            taxonomy=random.choice(taxonomies),
+            category=random.choice(categories),
+            dataset=f"batch_{random.randint(1000, 9999)}",
+            description=f"Unusual {random.choice(['spike', 'drop', 'pattern'])} in {random.choice(taxonomies)} data",
+            metric=random.choice(["moving_avg", "yoy_change", "volatility", "trend_score"]),
+            report_type=random.choice(["Daily Digest", "Weekly Summary", "Monthly Analysis", "Custom Query"]),
+            report_name=f"{random.choice(['Inflation', 'Employment', 'GDP'])} Report - {now.strftime('%Y-%m-%d')}",
+            format=random.choice(["PDF", "Excel", "JSON", "CSV"]),
+            time=f"{random.randint(6, 18):02d}:00",
+            recipients=random.randint(3, 15)
+        )
+        
+        logs.append({
+            "time": (now - timedelta(minutes=minutes_ago, seconds=random.randint(0, 59))).isoformat(),
+            "level": level,
+            "message": message
+        })
+    
+    # Sort by time descending
+    logs.sort(key=lambda x: x["time"], reverse=True)
+    return logs
 
 # Agent type definitions
 AGENT_TYPES = {
@@ -179,11 +279,24 @@ async def get_agent_types():
 
 @router.get("/{agent_id}")
 async def get_agent(agent_id: str):
-    """Get agent details"""
+    """Get agent details including logs"""
     if agent_id in agents_state:
-        return agents_state[agent_id]
+        agent = agents_state[agent_id]
+        # Generate dynamic logs based on agent type and status
+        logs = generate_agent_logs(agent["type"], agent["status"])
+        return {**agent, "logs": logs}
     
     return {
         "status": "error",
         "message": "Agent not found"
     }
+
+@router.get("/{agent_id}/logs")
+async def get_agent_logs(agent_id: str, limit: int = 20):
+    """Get agent runtime logs"""
+    if agent_id not in agents_state:
+        return {"status": "error", "message": "Agent not found"}
+    
+    agent = agents_state[agent_id]
+    logs = generate_agent_logs(agent["type"], agent["status"])
+    return {"agent_id": agent_id, "logs": logs[:limit]}

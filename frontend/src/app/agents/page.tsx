@@ -1,9 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, Play, Pause, Square, Settings, Search as SearchIcon, Download, Cpu, FileText, ArrowRight } from 'lucide-react'
+import { Plus, Search, Play, Pause, Square, Settings, Search as SearchIcon, Download, Cpu, FileText, ArrowRight, ChevronDown, ChevronUp, Terminal, AlertCircle, CheckCircle, Info } from 'lucide-react'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
+
+interface LogEntry {
+  time: string
+  level: 'info' | 'success' | 'warning' | 'error'
+  message: string
+}
 
 interface AgentMetrics {
   [key: string]: string | number | string[]
@@ -19,6 +25,7 @@ interface Agent {
   progress: number
   schedule: string
   metrics: AgentMetrics
+  logs?: LogEntry[]
   [key: string]: any
 }
 
@@ -56,6 +63,7 @@ const getAgentBorderColor = (type: string) => {
 
 export default function AgentsPage() {
   const [searchTerm, setSearchTerm] = useState('')
+  const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set())
   const queryClient = useQueryClient()
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://afpi-backend-43847292060.us-central1.run.app'
@@ -67,8 +75,22 @@ export default function AgentsPage() {
       if (!response.ok) throw new Error('Failed to fetch agents')
       const json = await response.json()
       const data = json.data || json
-      return Array.isArray(data) ? data : []
+      
+      // Fetch logs for each agent
+      const agentsWithLogs = await Promise.all(
+        (Array.isArray(data) ? data : []).map(async (agent: Agent) => {
+          try {
+            const logsRes = await fetch(`${API_URL}/api/v1/agents/${agent.id}/logs?limit=10`)
+            const logsJson = await logsRes.json()
+            return { ...agent, logs: logsJson.logs || [] }
+          } catch {
+            return { ...agent, logs: [] }
+          }
+        })
+      )
+      return agentsWithLogs
     },
+    refetchInterval: 5000, // Auto-refresh every 5 seconds for live logs
   })
 
   const controlMutation = useMutation({
@@ -109,6 +131,32 @@ export default function AgentsPage() {
 
   const handleControl = (agentId: string, action: string) => {
     controlMutation.mutate({ agentId, action })
+  }
+
+  const toggleLogs = (agentId: string) => {
+    setExpandedLogs(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(agentId)) {
+        newSet.delete(agentId)
+      } else {
+        newSet.add(agentId)
+      }
+      return newSet
+    })
+  }
+
+  const getLogIcon = (level: string) => {
+    switch (level) {
+      case 'success': return <CheckCircle className="h-3 w-3 text-green-500" />
+      case 'warning': return <AlertCircle className="h-3 w-3 text-yellow-500" />
+      case 'error': return <AlertCircle className="h-3 w-3 text-red-500" />
+      default: return <Info className="h-3 w-3 text-blue-500" />
+    }
+  }
+
+  const formatLogTime = (isoTime: string) => {
+    const date = new Date(isoTime)
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
   }
 
   const formatMetricValue = (value: string | number | string[]): string => {
@@ -297,6 +345,51 @@ export default function AgentsPage() {
                       ))}
                     </div>
                   )}
+
+                  {/* Logs Section */}
+                  <div className="mt-4 pt-4 border-t">
+                    <button
+                      onClick={() => toggleLogs(agent.id)}
+                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full"
+                    >
+                      <Terminal className="h-4 w-4" />
+                      <span>Runtime Logs</span>
+                      {expandedLogs.has(agent.id) ? (
+                        <ChevronUp className="h-4 w-4 ml-auto" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 ml-auto" />
+                      )}
+                      {agent.status === 'running' && (
+                        <span className="ml-2 flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-green-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                      )}
+                    </button>
+                    
+                    {expandedLogs.has(agent.id) && (
+                      <div className="mt-3 bg-gray-900 rounded-lg p-3 font-mono text-xs max-h-64 overflow-y-auto">
+                        {agent.logs && agent.logs.length > 0 ? (
+                          agent.logs.map((log, idx) => (
+                            <div key={idx} className="flex items-start gap-2 py-1 border-b border-gray-800 last:border-0">
+                              <span className="text-gray-500 whitespace-nowrap">{formatLogTime(log.time)}</span>
+                              {getLogIcon(log.level)}
+                              <span className={`flex-1 ${
+                                log.level === 'error' ? 'text-red-400' :
+                                log.level === 'warning' ? 'text-yellow-400' :
+                                log.level === 'success' ? 'text-green-400' :
+                                'text-gray-300'
+                              }`}>
+                                {log.message}
+                              </span>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-gray-500 italic">No recent logs</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )
             })
