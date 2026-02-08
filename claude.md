@@ -1,6 +1,6 @@
 # AFPI Platform - Deployment Status & Session Notes
 
-**Last Updated**: February 3, 2026  
+**Last Updated**: February 7, 2026  
 **Project**: AFPIP (Autonomous Financial Planning Intelligence Platform)  
 **Domain**: afpip.com
 
@@ -18,21 +18,19 @@
 
 2. **Backend Deployment** ✅ LIVE
    - Service: `afpi-backend`
-   - Cloud Run URL: https://afpi-backend-lxs3uhyr5q-uc.a.run.app
+   - Cloud Run URL: https://afpi-backend-43847292060.us-central1.run.app
    - Custom Domain: https://api.afpip.com
-   - Active Revision: `afpi-backend-00012-7xx`
-   - Image: `us-central1-docker.pkg.dev/afpi-production/afpi-repo/afpi-backend:v3`
-   - Image Digest: `sha256:d852aec8ef65d194a31940587cccc43b72ec76174646f6044c8dd4cd61da7501`
+   - Active Revision: `afpi-backend-00022-5tb`
+   - Image: `us-central1-docker.pkg.dev/afpi-production/afpi-repo/afpi-backend:v13`
    - Health: ✅ `{"status":"healthy","version":"1.0.0"}`
-   - API Docs: https://afpi-backend-lxs3uhyr5q-uc.a.run.app/api/v1/docs
+   - API Docs: https://afpi-backend-43847292060.us-central1.run.app/api/v1/docs
 
 3. **Frontend Deployment** ✅ LIVE
    - Service: `afpi-frontend`
    - Cloud Run URL: https://afpi-frontend-43847292060.us-central1.run.app
    - Custom Domain: https://afpip.com
-   - Active Revision: `afpi-frontend-00005-gk2`
-   - Image: `us-central1-docker.pkg.dev/afpi-production/afpi-repo/afpi-frontend:v2`
-   - Image Digest: `sha256:65e3226a5dfc9333914340e9388db1aa51a415f47b4c2a78cdab738b75b5c6a8`
+   - Active Revision: `afpi-frontend-00019-v92`
+   - Image: `us-central1-docker.pkg.dev/afpi-production/afpi-repo/afpi-frontend:v16`
    - Status: ✅ HTTP 200
 
 4. **AI Assistant** ✅ CONFIGURED
@@ -305,8 +303,8 @@ gcloud logging read "resource.type=cloud_run_revision AND resource.labels.servic
 | Component | Frontend | Backend API | Database | Status |
 |-----------|----------|-------------|----------|--------|
 | Dashboard Home | ✅ UI exists | ✅ Mock data | ❌ None | ⚠️ Hardcoded |
-| Data Sources | ✅ UI exists | ⚠️ Mock only | ❌ None | ⚠️ Not functional |
-| Agents | ✅ UI exists | ⚠️ Mock only | ❌ None | ⚠️ Not functional |
+| Data Sources | ✅ Full CRUD | ✅ CRUD API | ❌ In-memory | ✅ Working |
+| Agents | ✅ 4-Agent Pipeline | ✅ Control API | ❌ In-memory | ✅ Working |
 | Taxonomies | ✅ UI exists | ⚠️ Mock only | ❌ None | ⚠️ Not functional |
 | Analytics | ✅ UI exists | ⚠️ Mock only | ❌ None | ⚠️ Charts placeholder |
 | Reports | ✅ UI exists | ❌ No API | ❌ None | ❌ Mock data only |
@@ -320,10 +318,10 @@ gcloud logging read "resource.type=cloud_run_revision AND resource.labels.servic
 
 ## 🚀 Implementation Todo List
 
-### Phase 1: Fix Immediate Issues (Priority: HIGH)
-- [ ] **1.1 Update Login Page** - Remove demo credentials display (security)
-- [ ] **1.2 Fix API URLs** - Frontend still using localhost:8000 in some places
-- [ ] **1.3 Connect Frontend to Real APIs** - Data Sources, Agents, Taxonomies pages call /api/v1/* but response format differs
+### Phase 1: Fix Immediate Issues (Priority: HIGH) ✅ COMPLETED
+- [x] **1.1 Update Login Page** - Demo credentials removed (security fix)
+- [x] **1.2 Fix API URLs** - Frontend using production API URL
+- [x] **1.3 Connect Frontend to Real APIs** - Done with defensive array handling
 
 ### Phase 2: Database & Persistence (Priority: HIGH)
 - [ ] **2.1 Set Up Cloud SQL** - Create MySQL instance for persistent storage
@@ -331,19 +329,19 @@ gcloud logging read "resource.type=cloud_run_revision AND resource.labels.servic
 - [ ] **2.3 Run Alembic Migrations** - Apply initial schema
 - [ ] **2.4 Update Backend Endpoints** - Replace mock data with DB queries
 
-### Phase 3: Data Sources Module (Priority: MEDIUM)
-- [ ] **3.1 Create Data Source CRUD** - Full create/read/update/delete operations
-- [ ] **3.2 Add Data Source Types** - API, File Upload, Scraper, BigQuery, etc.
-- [ ] **3.3 Implement Sync Status** - Track last sync, record counts
-- [ ] **3.4 Add Configuration Modal** - UI for configuring each source type
-- [ ] **3.5 Schedule Management** - Cron-based sync scheduling
+### Phase 3: Data Sources Module (Priority: MEDIUM) ✅ COMPLETED
+- [x] **3.1 Create Data Source CRUD** - Full create/read/update/delete operations
+- [x] **3.2 Add Data Source Types** - API, File Upload, Scraper, BigQuery, Webhook
+- [x] **3.3 Implement Sync Status** - Track last sync, record counts
+- [x] **3.4 Add Configuration Modal** - UI for configuring each source type
+- [x] **3.5 Schedule Management** - Cron-based sync scheduling (presets)
 
-### Phase 4: AI Agents Module (Priority: MEDIUM)
-- [ ] **4.1 Agent CRUD Operations** - Create/configure/delete agents
-- [ ] **4.2 Agent Control Actions** - Start/stop/pause/resume with real effect
-- [ ] **4.3 Model Selection** - Choose from configured AI providers
+### Phase 4: AI Agents Module (Priority: MEDIUM) ✅ COMPLETED
+- [x] **4.1 Agent CRUD Operations** - 4-agent pipeline (Discovery, Collector, Analyzer, Reporter)
+- [x] **4.2 Agent Control Actions** - Start/stop/pause/resume working
+- [x] **4.3 Model Selection** - Each agent type has defined role
 - [ ] **4.4 Task Queue Integration** - Connect to job processing system
-- [ ] **4.5 Agent Logs/History** - View agent execution history
+- [x] **4.5 Agent Logs/History** - Professional tab UI with live logs
 
 ### Phase 5: Taxonomies Module (Priority: MEDIUM)
 - [ ] **5.1 Taxonomy CRUD** - Full category management
@@ -554,11 +552,11 @@ Frontend expects:
 
 ## ✅ Session Checklist for Next Time
 
-- [ ] Test AI Assistant with X.AI API key configured
-- [ ] Verify custom domains are working with SSL (https://afpip.com, https://api.afpip.com)
-- [ ] Update frontend to use custom API domain
+- [x] Test AI Assistant with X.AI API key configured
+- [x] Verify custom domains are working with SSL (https://afpip.com, https://api.afpip.com)
+- [x] Update frontend to use custom API domain
 - [ ] Set up Cloud SQL for persistent database
-- [ ] Configure Secret Manager for sensitive values
+- [x] Configure Secret Manager for sensitive values
 - [ ] Set up monitoring and alerting
 - [ ] Review and optimize costs
 - [ ] Plan CI/CD pipeline
@@ -566,6 +564,24 @@ Frontend expects:
 ---
 
 ## 📝 Session History
+
+### February 5-7, 2026
+- **Agent Pipeline Architecture**: Implemented 4-agent system
+  - 🔍 **Discovery Agent**: Crawls data sources, grades quality/freshness
+  - 📥 **Collector Agent**: Fetches data from approved sources
+  - 🔬 **Analyzer Agent**: Cleans, validates, normalizes data
+  - 📊 **Reporter Agent**: Generates reports in various formats
+- **Agent Logs UI**: Professional tab-based interface (Overview/Logs/Settings)
+- **Data Sources Full CRUD**: Add/Edit/Delete/Sync functionality
+  - Source types: API, File, Scraper, BigQuery, Webhook
+  - Schedule presets: Every 15min, Hourly, Daily, Weekly, Manual
+  - Sync triggers data collection
+- **Bug Fixes**: 
+  - Fixed array handling errors on agents/data-sources/taxonomies pages
+  - Fixed toLocaleString on undefined recordCount
+  - Defensive `Array.isArray()` checks throughout
+- **Documentation**: Created `docs/AGENT_ARCHITECTURE.md`
+- **Deployments**: Backend v10-v13, Frontend v11-v16
 
 ### February 4, 2026
 - Reviewed all dashboard components and created comprehensive todo list
@@ -608,9 +624,10 @@ Frontend expects:
 
 ---
 
-**Last Updated**: February 4, 2026  
+**Last Updated**: February 7, 2026  
 **Platform Status**: ✅ LIVE  
-**Current Versions**: Backend v9, Frontend v10  
+**Current Versions**: Backend v13, Frontend v16  
 **AI Assistant**: ✅ Working with X.AI (Grok-3)  
 **GitHub Integration**: ✅ Working (PR creation enabled)  
+**Agent Pipeline**: ✅ 4-agent architecture (Discovery → Collector → Analyzer → Reporter)  
 **Admin Credentials**: `admin@afpip.com` / `8Ud4a-4GZfgyBlOhb7TxyQ` (hash in Secret Manager)
