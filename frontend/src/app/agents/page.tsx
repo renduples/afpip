@@ -346,47 +346,84 @@ export default function AgentsPage() {
                     </div>
                   )}
 
-                  {/* Logs Section */}
+                  {/* Tab Buttons */}
                   <div className="mt-4 pt-4 border-t">
-                    <button
-                      onClick={() => toggleLogs(agent.id)}
-                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full"
-                    >
-                      <Terminal className="h-4 w-4" />
-                      <span>Runtime Logs</span>
-                      {expandedLogs.has(agent.id) ? (
-                        <ChevronUp className="h-4 w-4 ml-auto" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4 ml-auto" />
-                      )}
-                      {agent.status === 'running' && (
-                        <span className="ml-2 flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-green-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                        </span>
-                      )}
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => toggleLogs(agent.id)}
+                        className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                          expandedLogs.has(agent.id)
+                            ? 'bg-gray-900 text-white shadow-md'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        <Terminal className="h-4 w-4" />
+                        <span>Logs</span>
+                        {agent.status === 'running' && (
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
+                      >
+                        <Settings className="h-4 w-4" />
+                        <span>Config</span>
+                      </button>
+                      <button
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
+                      >
+                        <Info className="h-4 w-4" />
+                        <span>History</span>
+                      </button>
+                    </div>
                     
                     {expandedLogs.has(agent.id) && (
-                      <div className="mt-3 bg-gray-900 rounded-lg p-3 font-mono text-xs max-h-64 overflow-y-auto">
-                        {agent.logs && agent.logs.length > 0 ? (
-                          agent.logs.map((log, idx) => (
-                            <div key={idx} className="flex items-start gap-2 py-1 border-b border-gray-800 last:border-0">
-                              <span className="text-gray-500 whitespace-nowrap">{formatLogTime(log.time)}</span>
-                              {getLogIcon(log.level)}
-                              <span className={`flex-1 ${
-                                log.level === 'error' ? 'text-red-400' :
-                                log.level === 'warning' ? 'text-yellow-400' :
-                                log.level === 'success' ? 'text-green-400' :
-                                'text-gray-300'
-                              }`}>
-                                {log.message}
+                      <div className="mt-3 bg-gray-900 rounded-lg overflow-hidden shadow-lg">
+                        <div className="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700">
+                          <span className="text-xs text-gray-400 font-medium">RUNTIME OUTPUT</span>
+                          <div className="flex items-center gap-2">
+                            {agent.status === 'running' && (
+                              <span className="text-xs text-green-400 flex items-center gap-1">
+                                <span className="relative flex h-2 w-2">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                </span>
+                                Live
                               </span>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="text-gray-500 italic">No recent logs</div>
-                        )}
+                            )}
+                            <span className="text-xs text-gray-500">{agent.logs?.length || 0} entries</span>
+                          </div>
+                        </div>
+                        <div className="p-3 font-mono text-xs max-h-64 overflow-y-auto">
+                          {agent.logs && agent.logs.length > 0 ? (
+                            agent.logs.map((log, idx) => (
+                              <div key={idx} className="flex items-start gap-3 py-1.5 border-b border-gray-800 last:border-0 hover:bg-gray-800/50">
+                                <span className="text-gray-500 whitespace-nowrap font-medium">{formatLogTime(log.time)}</span>
+                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                  log.level === 'error' ? 'bg-red-900/50 text-red-400' :
+                                  log.level === 'warning' ? 'bg-yellow-900/50 text-yellow-400' :
+                                  log.level === 'success' ? 'bg-green-900/50 text-green-400' :
+                                  'bg-blue-900/50 text-blue-400'
+                                }`}>
+                                  {log.level}
+                                </span>
+                                <span className={`flex-1 ${
+                                  log.level === 'error' ? 'text-red-400' :
+                                  log.level === 'warning' ? 'text-yellow-400' :
+                                  log.level === 'success' ? 'text-green-400' :
+                                  'text-gray-300'
+                                }`}>
+                                  {log.message}
+                                </span>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-gray-500 italic py-4 text-center">No recent logs</div>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
