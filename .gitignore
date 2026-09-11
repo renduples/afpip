@@ -71,3 +71,7 @@ data/raw/*
 data/processed/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
+
+# Agent / AI files (kept on disk, not tracked)
+CLAUDE.md
+claude.md
